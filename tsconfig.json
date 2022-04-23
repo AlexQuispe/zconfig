@@ -12,6 +12,7 @@
     ],
     "module": "commonjs",
     "moduleResolution": "node",
+    "resolveJsonModule": true,
     "noImplicitAny": false,
     "noImplicitThis": true,
     "noUnusedLocals": true,
