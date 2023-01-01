@@ -2,24 +2,35 @@
 
 A CLI for zconfig.
 
-## Customizing your CLI
+## Comandos
 
-Check out the documentation at https://github.com/infinitered/gluegun/tree/master/docs.
+| Command | Option      | Option alias | Description                         |
+| ------- | ----------- | ------------ | ----------------------------------- |
+|         | `--version` | `-V`         | Muestra la versión.                 |
+|         | `--help`    | `-h`         | Muestra la ayuda.                   |
+| `hello` |             |              | Muestra un mensaje de bienvenida.   |
+| `hello` | `--help`    | `-h`         | Muestra la ayuda del comando hello. |
 
-## Publishing to NPM
+## Ejecución de comandos
 
-To package your CLI up for NPM, do this:
+```bash
+# production
+zconfig [options] [command]
 
-```shell
-$ npm login
-$ npm whoami
-$ npm test
-
-$ npm run build
-
-$ npm publish
+# development
+npm run dev -- [options] [command]
 ```
 
-# License
+Ejemplos:
 
-MIT - see LICENSE
+```bash
+zconfig --version
+zconfig -V
+
+zconfig --help
+zconfig -h
+
+zconfig hello
+zconfig hello --help
+zconfig hello -h
+```
