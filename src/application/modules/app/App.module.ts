@@ -1,7 +1,8 @@
 import path from 'path';
+import os from 'os';
 import { BusinessError } from '../../../common/errors';
 import { Toolbox } from '../../../core/models';
-import { FileService } from '../../../core/utils';
+import { FileService, AuthService } from '../../../core/utils';
 import { ProjectInfo, SettingData } from './types';
 import gitDiff from 'git-diff';
 
@@ -13,7 +14,7 @@ export class AppModule {
 
   constructor(toolbox: Toolbox) {
     this.projectPath = toolbox.rootPath;
-    this.workspacePath = path.resolve(toolbox.rootPath, '.zconfig');
+    this.workspacePath = path.resolve(os.homedir(), '.zconfig', AuthService.md5(toolbox.rootPath));
     this.settingFilePath = path.resolve(this.workspacePath, 'config.json');
     this.environmentsDirPath = path.resolve(this.workspacePath, 'environments');
   }
@@ -145,8 +146,9 @@ export class AppModule {
       throw new BusinessError(`No existe el entorno ${env}`);
     }
 
+    const currentEnv = settingData.project.env;
     const { modified, deleted } = await this.getFileStatus();
-    if (modified.length > 0 || deleted.length > 0) {
+    if (currentEnv !== env && (modified.length > 0 || deleted.length > 0)) {
       throw new BusinessError('No se puede cambiar de entorno porque el espacio de trabajo no se encuentra limpio.');
     }
 
@@ -338,6 +340,36 @@ export class AppModule {
 
     if (settingData.project.env === env) {
       settingData.project.env = null;
+    }
+
+    await this.updateSetting(settingData);
+  }
+
+  async mergeEnv(env: string) {
+    const settingData = await this.getSetting();
+    if (!settingData.environments[env]) {
+      throw new BusinessError(`No existe el entorno ${env}`);
+    }
+
+    const currentEnv = settingData.project.env;
+    const { modified, deleted } = await this.getFileStatus();
+    if (currentEnv !== env && (modified.length > 0 || deleted.length > 0)) {
+      throw new BusinessError('No se puede cambiar de entorno porque el espacio de trabajo no se encuentra limpio.');
+    }
+
+    const source = path.resolve(this.environmentsDirPath, env);
+    const target = path.resolve(this.projectPath);
+    await FileService.copyDir(source, target);
+
+    if (currentEnv) {
+      const target2 = path.resolve(this.environmentsDirPath, currentEnv);
+      await FileService.copyDir(source, target2);
+      for (const x of settingData.environments[env]) {
+        if (settingData.environments[currentEnv].includes(x)) {
+          continue;
+        }
+        settingData.environments[currentEnv].push(x);
+      }
     }
 
     await this.updateSetting(settingData);
